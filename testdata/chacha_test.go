@@ -6,6 +6,7 @@ import (
     "../encryption"
 )
 
+// https://tools.ietf.org/html/rfc7539#appendix-A.2
 func TestChacha1(t *testing.T) {
     key := []byte{
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

@@ -7,7 +7,9 @@ import (
     "../utils"
 )
 
+
 func TestHKDF1(t *testing.T) {
+    // https://tools.ietf.org/html/rfc5869#appendix-A.1
 
     IKM := encryption.Hex2Bytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
     salt := encryption.Hex2Bytes("000102030405060708090a0b0c")
@@ -30,6 +32,7 @@ func TestHKDF1(t *testing.T) {
 }
 
 func TestHKDF2(t *testing.T) {
+    // https://tools.ietf.org/html/rfc5869#appendix-A.2
 
     IKM := encryption.Hex2Bytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f")
     salt := encryption.Hex2Bytes("606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf")
@@ -51,6 +54,7 @@ func TestHKDF2(t *testing.T) {
 }
 
 func TestHKDF3(t *testing.T) {
+    // https://tools.ietf.org/html/rfc5869#appendix-A.3
 
     IKM := encryption.Hex2Bytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
     salt := []byte{}
