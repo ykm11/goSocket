@@ -1,7 +1,8 @@
-package encryption
+package x25519
 
 import (
     "math/big"
+    "fmt"
 )
 
 var (
