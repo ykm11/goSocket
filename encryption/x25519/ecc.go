@@ -77,10 +77,10 @@ func Export_PubKey(p Position) []byte {
 }
 
 func Import_PubKey(key []byte) Position {
-    if (len(key) != 65) {
-        fmt.Printf("[FAATL] key length : %d\n", len(key))
+    if (len(key) != 65 || key[0] != '\x04') {
+        fmt.Printf("[FATAL] key length : %d\n", len(key))
         fmt.Printf("[FATAL] key : % x\n", key)
-        panic("ECC PubKey Importing Error")
+        panic("ECC PubKey Importing Error (RFC5480 format)")
     }
     x := new(big.Int).SetBytes(key[1:1+32])
     y := new(big.Int).SetBytes(key[1+32:])
