@@ -3,6 +3,7 @@ package x25519
 import (
     "math/big"
     "fmt"
+    "crypto/rand"
 )
 
 var (
@@ -87,6 +88,43 @@ func Import_PubKey(key []byte) Position {
     return Position{x, y}
 }
 
+func make_divlist(n *big.Int) []int {
+    div := []int{}
+    for ; n.Cmp(ONE) != 0; {
+        t := 0
+        if r := new(big.Int).Mod(n, TWO); r.Cmp(ONE) == 0 {
+            n.Sub(n, ONE)
+            div = append(div, 0)
+        }
+        for ;; {
+            if r := new(big.Int).Mod(n, TWO); r.Cmp(ONE) == 0 {
+                break
+            }
+            n.Div(n, TWO)
+            t = t + 1
+        }
+
+        div = append(div, t)
+    }
+    return div
+}
+func EC_xP(x *big.Int, p Position) Position {
+    base_p := Position{p.X, p.Y}
+    n := new(big.Int).SetBytes(x.Bytes()) // Not to change 'a' (address) value
+
+    div := make_divlist(n)
+    for idx := len(div)-1; idx >= 0; idx-- {
+        if div[idx] == 0 {
+            p = EC_Add(p, base_p)
+        } else {
+            for i := 0; i < div[idx]; i++ {
+                p = EC_Doubling(p)
+            }
+        }
+    }
+    return p
+}
+
 func EC_Add(p1, p2 Position) Position {
     x2_x1 := sub(p2.X, p1.X)
     y2_y1 := sub(p2.Y, p1.Y)
@@ -108,4 +146,12 @@ func EC_Doubling(p Position) Position {
     x := sub(sub(pow(lmd, TWO), mul(TWO, p.X)), A)
     y := sub(sub(mul(lmd, add(A, mul(THREE, p.X))), pow(lmd, THREE)), p.Y)
     return Position{x, y}
+}
+
+func ECDHE_Key_Gen() (*big.Int, Position) {
+    a, err := rand.Int(rand.Reader, p)
+    if err != nil {
+        panic("[FATAL] Error Occured during generating random-number")
+    }
+    return a, Position{U, V}
 }
