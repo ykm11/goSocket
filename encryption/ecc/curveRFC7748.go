@@ -98,3 +98,11 @@ func X25519(k, u []byte) []byte { // RFC7748
     res := x25519mul(k_, u_, bits, a24)
     return EncodeUCoordinate(res, 255)
 }
+
+func X25519_Key_Gen() ([]byte, []byte) {
+    a, err := rand.Int(rand.Reader, p)
+    if err != nil {
+        panic("[FATAL] Error Occured during generating random-number")
+    }
+    return a.Bytes(), EncodeUCoordinate(U, 255)
+}
