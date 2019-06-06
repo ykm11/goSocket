@@ -113,3 +113,7 @@ func Str2Int(str string, base int) *big.Int {
     return n
 }
 
+func ValCopy(x *big.Int) *big.Int {
+    r := new(big.Int).SetBytes(x.Bytes())
+    return r
+}
