@@ -2,7 +2,14 @@ package encryption
 
 import (
     "math/big"
-    "crypto/rand"
+)
+
+var (
+    U_x25519 = big.NewInt(9)
+    U_x448 = big.NewInt(5)
+
+    p_x25519 = Str2Int("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed", 16)
+    p_x448 = Str2Int("fffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
 )
 
 func DecodeUCoordinate(u []byte, bits int) *big.Int {
@@ -56,13 +63,6 @@ func DecodeScalar448(k []byte) *big.Int {
     k_list[55] |= 128
     return DecodeLittleEndian(k_list, 448)
 }
-/*
-   def decodeScalar448(k):
-       k_list = [ord(b) for b in k]
-       k_list[0] &= 252
-       k_list[55] |= 128
-       return decodeLittleEndian(k_list, 448)
-*/
 
 func cswap(swap, x_2, x_3, p *big.Int) (*big.Int, *big.Int) {
     dummy := Mul(swap, Sub(x_2, x_3, p), p)
@@ -124,7 +124,7 @@ func X25519(k, u []byte) []byte { // RFC7748
 
 func X448(k, u []byte) []byte { // RFC7748
     bits := 448
-    k_ := DecodeScalar448(k) // Not Implemented
+    k_ := DecodeScalar448(k)
     u_ := DecodeUCoordinate(u, bits)
 
     a24 := big.NewInt(39081)
@@ -132,10 +132,20 @@ func X448(k, u []byte) []byte { // RFC7748
     return EncodeUCoordinate(res, bits)
 }
 
-func X25519_Key_Gen() ([]byte, []byte) { // 32 random bytes in a[0] to a[31]
-    a, err := rand.Int(rand.Reader, p_x25519)
-    if err != nil {
-        panic("[FATAL] Error Occured during generating random-number")
+func X_Key_Gen(X_bits uint) ([]byte, []byte) { // 32 or 56 random bytes
+    offset := new(big.Int).Lsh(ONE, X_bits-1)
+    end := new(big.Int).Lsh(ONE, X_bits)
+    rnd_key := Randint(offset, end)
+
+    var U_coordinate []byte
+    switch X_bits {
+    case 255:
+        U_coordinate = EncodeUCoordinate(U_x25519, 255)
+    case 448:
+        U_coordinate = EncodeUCoordinate(U_x448, 448)
+    default:
+        U_coordinate = EncodeUCoordinate(U_x25519, 255)
     }
-    return a.Bytes(), EncodeUCoordinate(U_x25519, 255)
+
+    return rnd_key.Bytes(), U_coordinate
 }
