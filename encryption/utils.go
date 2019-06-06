@@ -104,3 +104,12 @@ func Hex2Bytes(s string) []byte {
     }
     return decoded
 }
+
+func Str2Int(str string, base int) *big.Int {
+    n, ok := new(big.Int).SetString(str, base)
+    if !ok {
+        panic("UWAAAAAAAAAAA")
+    }
+    return n
+}
+

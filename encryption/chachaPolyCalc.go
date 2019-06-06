@@ -1,14 +1,14 @@
 package encryption
 
-func Add(x, y uint32) uint32 {
+func add(x, y uint32) uint32 {
     return x + y
 }
 
-func Xor(x, y uint32) uint32 {
+func xor(x, y uint32) uint32 {
     return x ^ y
 }
 
-func LeftRotate(data uint32, n uint8) uint32 {
+func leftRotate(data uint32, n uint8) uint32 {
     left := data << n
     right := data >> (32 - n)
     return left | right
@@ -21,10 +21,10 @@ func QuarterRound(a, b, c, d uint32) (uint32, uint32, uint32, uint32) {
         3.  a += b; d ^= a; d <<<= 8;
         4.  c += d; b ^= c; b <<<= 7;
     */
-    a = Add(a, b); d = Xor(d, a); d = LeftRotate(d, 16)
-    c = Add(c, d); b = Xor(b, c); b = LeftRotate(b, 12)
-    a = Add(a, b); d = Xor(d, a); d = LeftRotate(d, 8)
-    c = Add(c, d); b = Xor(b, c); b = LeftRotate(b, 7)
+    a = add(a, b); d = xor(d, a); d = leftRotate(d, 16)
+    c = add(c, d); b = xor(b, c); b = leftRotate(b, 12)
+    a = add(a, b); d = xor(d, a); d = leftRotate(d, 8)
+    c = add(c, d); b = xor(b, c); b = leftRotate(b, 7)
 
     return a, b, c, d
 }

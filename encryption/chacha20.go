@@ -2,7 +2,6 @@ package encryption
 
 import "fmt"
 
-
 func Chacha20_inner_block(state []uint32) {
     /*
         state : c + k + b + n
