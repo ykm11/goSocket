@@ -36,7 +36,7 @@ func DecodeLittleEndian(b []byte, bits int) *big.Int {
     var tmp *big.Int
     s := ZERO
     for i := 0; i < (bits+7)/8; i++ {
-        tmp = new(big.Int).SetBytes([]byte{b[i]})
+        tmp = big.NewInt(int64(b[i]))
         tmp.Lsh(tmp, uint(8*i))
         s = Add(s, tmp, nil)
     }
