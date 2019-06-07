@@ -17,7 +17,7 @@ func DecodeUCoordinate(u []byte, bits int) *big.Int {
     for idx := 0; idx < len(u); idx++ {
         u_list[idx] = u[idx]
     }
-    if (bits % 8 != 0) {
+    if bits % 8 != 0 {
         u_list[len(u_list)-1] &= uint8((1<<(uint(bits)%8))-1)
     }
     return DecodeLittleEndian(u_list, bits)

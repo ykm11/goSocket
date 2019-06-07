@@ -1,12 +1,16 @@
 package utils
 
 import (
+    "hash"
     "crypto/sha256"
+    "crypto/sha512"
     "crypto/hmac"
 
     "fmt"
+    "log"
     "../encryption"
 )
+
 
 func b2i(b bool) uint64 {
     if b {
@@ -20,18 +24,36 @@ func divceil(divident, divisor uint64) uint64 {
     return (divident / divisor) + b2i(divident % divisor != 0)
 }
 
-func SecureHash(data []byte, hash_algorithm string) [32]byte {
-    var sum [32]byte
+func SecureHash(data []byte, hash_algorithm string) []byte {
+    var hashData []byte
+    var hasher hash.Hash
+
     switch hash_algorithm {
+    case "sha256", "SHA256":
+        hasher = sha256.New()
+    case "sha384", "SHA384":
+        hasher = sha512.New384()
+    case "sha512", "SHA512":
+        hasher = sha512.New()
     default:
-        sum = sha256.Sum256(data)
+        hasher = sha256.New()
     }
-    return sum
+
+    hasher.Write(data)
+    hashData = hasher.Sum(nil)
+    return hashData
 }
 
-// sha256しか予期していないので関係ない
-func SecureHMAC(key, message []byte) []byte {
-    mac := hmac.New(sha256.New, key)
+func SecureHMAC(key, message []byte, hash_algorithm string) []byte {
+    var mac hash.Hash
+    switch hash_algorithm {
+    case "sha256", "SHA256":
+        mac = hmac.New(sha256.New, key)
+    case "sha512", "SHA512":
+        mac = hmac.New(sha512.New, key)
+    default:
+        mac = hmac.New(sha256.New, key)
+    }
     mac.Write(message)
     return mac.Sum(nil)
 }
@@ -40,7 +62,6 @@ func SecureHMAC(key, message []byte) []byte {
     HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
     https://tools.ietf.org/html/rfc5869
 */
-
 func HKDF_extract(salt, IKM []byte, hash_algorithm string) []byte {
     /*
        HKDF-Extract(salt, IKM) -> PRK
@@ -62,7 +83,7 @@ func HKDF_extract(salt, IKM []byte, hash_algorithm string) []byte {
        PRK = HMAC-Hash(salt, IKM)
 
     */
-    return SecureHMAC(salt, IKM)
+    return SecureHMAC(salt, IKM, hash_algorithm)
 }
 
 func HKDF_expand(PRK, info []byte, L uint64, hash_algorithm string) []byte {
@@ -101,14 +122,24 @@ func HKDF_expand(PRK, info []byte, L uint64, hash_algorithm string) []byte {
             single octet.)
 
     */
-    N := divceil(L, sha256.Size)
+    var hashSize uint64
+    switch hash_algorithm {
+    case "sha256", "SHA256":
+        hashSize = sha256.Size
+    case "sha512", "SHA512":
+        hashSize = sha512.Size
+    default:
+        hashSize = sha256.Size
+    }
+
+    N := divceil(L, hashSize)
     T := []byte{}
     T_prev := []byte{}
     for i := 1; i < int(N) + 2; i++ {
         T = append(T, T_prev...)
         tmp := append(T_prev, info...)
         tmp = append(tmp, []byte{byte(i)}...)
-        T_prev = SecureHMAC(PRK, tmp)
+        T_prev = SecureHMAC(PRK, tmp, hash_algorithm)
     }
     return T[:L]
 }
@@ -151,9 +182,8 @@ func HKDF_expand_label(secret, label, hashValue []byte, length uint64, hash_algo
     HkdfLabel = append(HkdfLabel, byte(len(hashValue)))
     HkdfLabel = append(HkdfLabel, hashValue...)
 
-    fmt.Printf("[+] HKDF Label :% x\n", HkdfLabel)
-
-    return HKDF_expand(secret, HkdfLabel, length, "sha256")
+    fmt.Printf("[+] HKDF Label :%x\n", HkdfLabel)
+    return HKDF_expand(secret, HkdfLabel, length, hash_algorithm)
 }
 
 func Derive_secret(secret, label []byte, messages [][]byte, hash_algorithm string) []byte {
@@ -165,8 +195,7 @@ func Derive_secret(secret, label []byte, messages [][]byte, hash_algorithm strin
 
     if len(messages) == 0 {
         hs_hash := SecureHash([]byte{}, hash_algorithm)
-        // hs_hashが[32]bytesなのでスライスとして[:]
-        return HKDF_expand_label(secret, label, hs_hash[:], 32, hash_algorithm)
+        return HKDF_expand_label(secret, label, hs_hash, 32, hash_algorithm)
     } else {
         hs_hash := Transcript_hash(messages, hash_algorithm)
         return HKDF_expand_label(secret, label, hs_hash, 32, hash_algorithm)
@@ -185,16 +214,15 @@ func Transcript_hash(messages [][]byte, hash_algorithm string) []byte {
             data = append(data, messages[i]...)
         }
     }
-    // hs_valが[32]bytesなのでスライスとして[:]
     hs_val := SecureHash(data, hash_algorithm)
-    return hs_val[:]
+    return hs_val
 }
 
 func Gen_key_and_iv(secret []byte, key_size, nonce_size uint64, hash_algorithm string) ([]byte, []byte) {
     /*
 
     */
-    write_key := HKDF_expand_label(secret, []byte("key"), []byte{}, key_size, "sha256")
-    write_iv := HKDF_expand_label(secret, []byte("iv"), []byte{}, nonce_size, "sha256")
+    write_key := HKDF_expand_label(secret, []byte("key"), []byte{}, key_size, hash_algorithm)
+    write_iv := HKDF_expand_label(secret, []byte("iv"), []byte{}, nonce_size, hash_algorithm)
     return write_key, write_iv
 }
