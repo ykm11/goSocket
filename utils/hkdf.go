@@ -6,9 +6,8 @@ import (
     "crypto/sha512"
     "crypto/hmac"
 
-    "fmt"
-    "log"
     "../encryption"
+    "fmt"
 )
 
 
@@ -182,23 +181,28 @@ func HKDF_expand_label(secret, label, hashValue []byte, length uint64, hash_algo
     HkdfLabel = append(HkdfLabel, byte(len(hashValue)))
     HkdfLabel = append(HkdfLabel, hashValue...)
 
-    fmt.Printf("[+] HKDF Label :%x\n", HkdfLabel)
+    fmt.Printf("[+] HKDF Label: %x\n", HkdfLabel)
     return HKDF_expand(secret, HkdfLabel, length, hash_algorithm)
 }
 
 func Derive_secret(secret, label []byte, messages [][]byte, hash_algorithm string) []byte {
     /*
-        def derive_secret(secret, label, messages,
-                        hash_algorithm='sha256') -> bytearray:
 
     */
+    var hashSize uint64
+    switch hash_algorithm {
+    case "sha256", "SHA256":
+        hashSize = sha256.Size
+    default:
+        hashSize = sha256.Size
+    }
 
     if len(messages) == 0 {
-        hs_hash := SecureHash([]byte{}, hash_algorithm)
-        return HKDF_expand_label(secret, label, hs_hash, 32, hash_algorithm)
+        messages_hash := SecureHash([]byte{}, hash_algorithm)
+        return HKDF_expand_label(secret, label, messages_hash, hashSize, hash_algorithm)
     } else {
-        hs_hash := Transcript_hash(messages, hash_algorithm)
-        return HKDF_expand_label(secret, label, hs_hash, 32, hash_algorithm)
+        messages_hash := Transcript_hash(messages, hash_algorithm)
+        return HKDF_expand_label(secret, label, messages_hash, hashSize, hash_algorithm)
     }
 }
 

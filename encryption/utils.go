@@ -2,6 +2,7 @@ package encryption
 
 import (
     "math/big"
+    "crypto/rand"
     "encoding/hex"
 )
 
@@ -75,6 +76,14 @@ func NumTo2Bytes(x uint16) []byte {
     return data
 }
 
+func NumTo3Bytes(x uint32) []byte {
+    data := make([]byte, 3)
+    data[0] = byte(x >> 0x10 & 0xFF)
+    data[1] = byte(x >> 0x08 & 0xFF)
+    data[2] = byte(x >> 0x00 & 0xFF)
+    return data
+}
+
 func State_2_Key(state []uint32) []byte {
     key := make([]byte, 32)
 
@@ -117,3 +126,22 @@ func ValCopy(x *big.Int) *big.Int {
     r := new(big.Int).SetBytes(x.Bytes())
     return r
 }
+
+func Randint(offset, n *big.Int) *big.Int {
+    if offset != nil { // [offset, n)
+        randNum, _ := rand.Int(rand.Reader, Sub(n, offset, nil))
+        return Add(randNum, offset, nil)
+    } else { // [0, n)
+        randNum, _ := rand.Int(rand.Reader, n)
+        return randNum
+    }
+}
+
+func RandNbits(nbits uint) *big.Int {
+    offset := new(big.Int).Lsh(ONE, nbits-1)
+    end := new(big.Int).Lsh(ONE, nbits)
+    r := Randint(offset, end)
+    return r
+}
+
+

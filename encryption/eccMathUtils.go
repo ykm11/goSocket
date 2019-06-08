@@ -2,7 +2,6 @@ package encryption
 
 import (
     "math/big"
-    "crypto/rand"
 )
 
 var (
@@ -38,15 +37,5 @@ func Sub(a, b, modulus *big.Int) *big.Int {
 func Exp(a, b, modulus *big.Int) *big.Int {
     r := new(big.Int).Exp(a, b, modulus)
     return r
-}
-
-func Randint(offset, n *big.Int) *big.Int {
-    if offset != nil { // [offset, n)
-        randNum, _ := rand.Int(rand.Reader, Sub(n, offset, nil))
-        return Add(randNum, offset, nil)
-    } else { // [0, n)
-        randNum, _ := rand.Int(rand.Reader, n)
-        return randNum
-    }
 }
 
